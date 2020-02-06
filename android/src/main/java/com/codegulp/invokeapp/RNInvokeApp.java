@@ -16,7 +16,7 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-
+import android.os.Handler;
 import java.util.List;
 
 public class RNInvokeApp extends ReactContextBaseJavaModule {
@@ -58,9 +58,19 @@ public class RNInvokeApp extends ReactContextBaseJavaModule {
             return;
         }
 
-        if (isAppOnForeground(reactContext)) {
-            sendEvent();
-        }
+        // Because somehow at the time we start activity, the app is not in foreground yet
+        // So to make sure the event is always called after, we need to do a condition checking here
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if(!isAppOnForeground(reactContext))
+                    handler.postDelayed(this, 100);
+                else {
+                    sendEvent();
+                }
+            }
+        }, 100);
     }
 
     public static void sendEvent() {
